@@ -17,7 +17,8 @@
     "@nestjs/platform-express": "^10.0.0",
     "@rtsp/domain": "*",
     "@rtsp/infrastructure": "*",
-    "@rtsp/shared": "*"
+    "@rtsp/shared": "*",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@nestjs/testing": "^10.0.0",

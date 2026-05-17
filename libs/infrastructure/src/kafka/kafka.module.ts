@@ -4,10 +4,17 @@ import { KafkaConsumerService } from './kafka-consumer.service';
 
 export const KAFKA_CONFIG = 'KAFKA_CONFIG';
 
-export interface KafkaConfig {
+interface KafkaConfig {
   clientId: string;
   brokers: string[];
   groupId?: string;
+}
+
+function getKafkaConfig(): KafkaConfig {
+  return {
+    clientId: 'rtsp',
+    brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
+  };
 }
 
 @Global()
@@ -15,10 +22,7 @@ export interface KafkaConfig {
   providers: [
     {
       provide: KAFKA_CONFIG,
-      useValue: {
-        clientId: 'rtsp',
-        brokers: [process.env.KAFKA_BROKERS || 'localhost:9092'],
-      } as KafkaConfig,
+      useFactory: getKafkaConfig,
     },
     KafkaProducerService,
     KafkaConsumerService,

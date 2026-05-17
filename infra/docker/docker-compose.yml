@@ -109,34 +109,40 @@ services:
     networks:
       - rtsp-network
 
+  # Application Services
   ingestion-service:
     build:
-      context: ../../apps/ingestion-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: ingestion
     container_name: rtsp-ingestion-service
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
       - MQTT_HOST=mqtt
       - MQTT_PORT=1883
       - KAFKA_BROKERS=kafka:29092
     depends_on:
-      - mqtt
-      - kafka
+      mqtt:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - rtsp-network
+    restart: unless-stopped
 
   processing-service:
     build:
-      context: ../../apps/processing-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: processing
     container_name: rtsp-processing-service
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3001
       - KAFKA_BROKERS=kafka:29092
       - POSTGRES_HOST=postgres
@@ -147,38 +153,46 @@ services:
       - RABBITMQ_URL=amqp://rtsp:rtsp@rabbitmq:5672
       - RABBITMQ_QUEUE=alerts
     depends_on:
-      - kafka
-      - postgres
-      - rabbitmq
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - rtsp-network
+    restart: unless-stopped
 
   alert-service:
     build:
-      context: ../../apps/alert-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: alert
     container_name: rtsp-alert-service
     ports:
       - "3002:3002"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3002
       - RABBITMQ_URL=amqp://rtsp:rtsp@rabbitmq:5672
       - RABBITMQ_QUEUE=alerts
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     networks:
       - rtsp-network
+    restart: unless-stopped
 
   api-gateway:
     build:
-      context: ../../apps/api-gateway
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: gateway
     container_name: rtsp-api-gateway
     ports:
       - "3003:3003"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3003
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -186,9 +200,11 @@ services:
       - POSTGRES_PASSWORD=rtsp
       - POSTGRES_DB=rtsp
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - rtsp-network
+    restart: unless-stopped
 
 volumes:
   zookeeper-data:

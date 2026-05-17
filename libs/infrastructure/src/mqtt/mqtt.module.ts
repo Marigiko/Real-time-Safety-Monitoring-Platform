@@ -3,7 +3,7 @@ import { MqttClientService } from './mqtt-client.service';
 
 export const MQTT_CONFIG = 'MQTT_CONFIG';
 
-export interface MqttConfig {
+interface MqttConfig {
   host: string;
   port: number;
   username?: string;

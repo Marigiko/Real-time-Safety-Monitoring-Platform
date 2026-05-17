@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
 import { TelemetryIngestionService } from './telemetry-ingestion.service';
 
 interface TelemetryPayload {
@@ -14,7 +14,7 @@ export class TelemetryController {
   constructor(private readonly ingestionService: TelemetryIngestionService) {}
 
   @Post()
-  @HttpCode(HttpStatus.ACCEPTED)
+  @HttpCode(202)
   async ingest(@Body() payload: TelemetryPayload) {
     await this.ingestionService.ingest({
       deviceId: payload.deviceId,

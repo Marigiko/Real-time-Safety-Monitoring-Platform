@@ -1,6 +1,14 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject } from '@nestjs/common';
 import * as mqtt from 'mqtt';
-import { MQTT_CONFIG, MqttConfig } from './mqtt.module';
+import { MQTT_CONFIG } from './mqtt.module';
+
+interface MqttConfig {
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  clientId: string;
+}
 
 @Injectable()
 export class MqttClientService implements OnModuleInit, OnModuleDestroy {

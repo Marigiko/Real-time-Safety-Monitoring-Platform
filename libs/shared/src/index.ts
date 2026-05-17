@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 export * from './logger.service';
 export * from './validation.pipe';
 export * from './health.service';

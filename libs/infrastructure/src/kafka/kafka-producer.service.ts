@@ -1,7 +1,13 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject } from '@nestjs/common';
 import { Kafka, Producer, ProducerRecord } from 'kafkajs';
-import { KAFKA_CONFIG, KafkaConfig } from './kafka.module';
+import { KAFKA_CONFIG } from './kafka.module';
 import { Telemetry } from '@rtsp/domain';
+
+interface KafkaConfig {
+  clientId: string;
+  brokers: string[];
+  groupId?: string;
+}
 
 @Injectable()
 export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {

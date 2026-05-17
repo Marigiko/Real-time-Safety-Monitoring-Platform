@@ -1,6 +1,12 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject } from '@nestjs/common';
 import { Kafka, Consumer, EachMessagePayload } from 'kafkajs';
-import { KAFKA_CONFIG, KafkaConfig } from './kafka.module';
+import { KAFKA_CONFIG } from './kafka.module';
+
+interface KafkaConfig {
+  clientId: string;
+  brokers: string[];
+  groupId?: string;
+}
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {

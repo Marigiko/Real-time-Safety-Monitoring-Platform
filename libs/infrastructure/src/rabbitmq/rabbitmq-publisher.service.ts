@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject } from '@nestjs/common';
 import * as amqp from 'amqplib';
-import { RABBITMQ_CONFIG, RabbitMQConfig } from './rabbitmq.module';
+import { RABBITMQ_CONFIG } from './rabbitmq.module';
+
+interface RabbitMQConfig {
+  url: string;
+  queue: string;
+}
 
 @Injectable()
 export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
