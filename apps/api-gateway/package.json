@@ -1,30 +1,31 @@
 {
   "name": "@rtsp/api-gateway",
   "version": "0.1.0",
-  "private": true,
-  "description": "API Gateway - REST API",
+  "description": "API Gateway for Real-time Safety Monitoring Platform",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc --build",
-    "dev": "bun --watch src/main.ts",
+    "build": "tsc",
+    "dev": "nest start",
     "start": "node dist/main.js",
-    "start:dev": "bun run src/main.ts",
-    "test": "bun test",
-    "lint": "echo 'No lint configured'",
-    "typecheck": "tsc --noEmit"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
-    "@nestjs/common": "^10.3.0",
-    "@nestjs/core": "^10.3.0",
-    "@nestjs/platform-express": "^10.3.0",
-    "@rtsp/domain": "workspace:*",
-    "@rtsp/infrastructure": "workspace:*",
-    "@rtsp/shared": "workspace:*",
-    "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@rtsp/domain": "*",
+    "@rtsp/infrastructure": "*",
+    "@rtsp/shared": "*"
   },
   "devDependencies": {
+    "@nestjs/testing": "^10.0.0",
+    "@types/express": "^4.17.0",
+    "@types/jest": "^29.5.0",
     "@types/node": "^20.10.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
     "typescript": "^5.3.3"
   }
 }
