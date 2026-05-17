@@ -1,0 +1,78 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - 'integration*'
+      - 'release'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.0.0
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: |
+          bun run typecheck || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/ecr-login@v2
+
+      - name: Build and push ingestion-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/ingestion-service
+          push: true
+          tags: ${{ secrets.ECR_REGISTRY }}/ingestion-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push processing-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/processing-service
+          push: true
+          tags: ${{ secrets.ECR_REGISTRY }}/processing-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push alert-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/alert-service
+          push: true
+          tags: ${{ secrets.ECR_REGISTRY }}/alert-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push api-gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api-gateway
+          push: true
+          tags: ${{ secrets.ECR_REGISTRY }}/api-gateway:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

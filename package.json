@@ -1,0 +1,28 @@
+{
+  "name": "rtsp-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-Time Safety Monitoring Platform - Monorepo",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "build:all": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "test:all": "bun run --filter '*' test",
+    "lint": "bun run --filter '*' lint",
+    "typecheck": "bun run --filter '*' typecheck",
+    "dev": "bun run --filter '*' dev",
+    "start": "bun run --filter '*' start"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.0.0"
+  }
+}

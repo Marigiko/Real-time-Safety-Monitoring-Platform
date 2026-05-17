@@ -1,0 +1,204 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    container_name: rtsp-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtsp-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    container_name: rtsp-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtsp-network
+
+  mqtt:
+    image: eclipse-mosquitto:2.0.15
+    hostname: mqtt
+    container_name: rtsp-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mqtt-data:/mosquitto/data
+      - mqtt-logs:/mosquitto/log
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1883"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtsp-network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    hostname: rabbitmq
+    container_name: rtsp-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: rtsp
+      RABBITMQ_DEFAULT_PASS: rtsp
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtsp-network
+
+  postgres:
+    image: postgres:15-alpine
+    hostname: postgres
+    container_name: rtsp-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: rtsp
+      POSTGRES_PASSWORD: rtsp
+      POSTGRES_DB: rtsp
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rtsp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtsp-network
+
+  ingestion-service:
+    build:
+      context: ../../apps/ingestion-service
+      dockerfile: Dockerfile
+    container_name: rtsp-ingestion-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MQTT_HOST=mqtt
+      - MQTT_PORT=1883
+      - KAFKA_BROKERS=kafka:29092
+    depends_on:
+      - mqtt
+      - kafka
+    networks:
+      - rtsp-network
+
+  processing-service:
+    build:
+      context: ../../apps/processing-service
+      dockerfile: Dockerfile
+    container_name: rtsp-processing-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - KAFKA_BROKERS=kafka:29092
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=rtsp
+      - POSTGRES_PASSWORD=rtsp
+      - POSTGRES_DB=rtsp
+      - RABBITMQ_URL=amqp://rtsp:rtsp@rabbitmq:5672
+      - RABBITMQ_QUEUE=alerts
+    depends_on:
+      - kafka
+      - postgres
+      - rabbitmq
+    networks:
+      - rtsp-network
+
+  alert-service:
+    build:
+      context: ../../apps/alert-service
+      dockerfile: Dockerfile
+    container_name: rtsp-alert-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - RABBITMQ_URL=amqp://rtsp:rtsp@rabbitmq:5672
+      - RABBITMQ_QUEUE=alerts
+    depends_on:
+      - rabbitmq
+    networks:
+      - rtsp-network
+
+  api-gateway:
+    build:
+      context: ../../apps/api-gateway
+      dockerfile: Dockerfile
+    container_name: rtsp-api-gateway
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=rtsp
+      - POSTGRES_PASSWORD=rtsp
+      - POSTGRES_DB=rtsp
+    depends_on:
+      - postgres
+    networks:
+      - rtsp-network
+
+volumes:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
+  mqtt-data:
+  mqtt-logs:
+  rabbitmq-data:
+  postgres-data:
+
+networks:
+  rtsp-network:
+    driver: bridge

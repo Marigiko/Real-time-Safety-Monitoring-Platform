@@ -1,0 +1,26 @@
+[install]
+# Use exact versions for reproducibility
+exact = true
+
+# Don't save package-lock.json
+packageLock = false
+
+# Auto-install missing peer dependencies
+autoPeers = true
+
+[install.scopes]
+# Private packages scope
+"@rtsp" = { path = "packages" }
+
+[test]
+# Coverage reporting
+coverage = true
+coverageThreshold = { "branches" = 80, "functions" = 80, "lines" = 80 }
+
+[runtime]
+# Enable experimental features
+fetch = true
+
+[run]
+# Silent mode for CI
+silent = false

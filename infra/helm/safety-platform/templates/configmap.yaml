@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  KAFKA_BROKERS: {{ .Values.config.kafka.brokers }}
+  RABBITMQ_URL: {{ .Values.config.rabbitmq.url }}
+  RABBITMQ_QUEUE: {{ .Values.config.rabbitmq.queue }}
+  MQTT_HOST: {{ .Values.config.mqtt.host }}
+  MQTT_PORT: {{ .Values.config.mqtt.port | quote }}
+  POSTGRES_HOST: {{ .Values.config.postgres.host }}
+  POSTGRES_PORT: {{ .Values.config.postgres.port | quote }}
+  POSTGRES_USER: {{ .Values.config.postgres.user }}
+  POSTGRES_DB: {{ .Values.config.postgres.database }}

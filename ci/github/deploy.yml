@@ -1,0 +1,42 @@
+name: Deploy to EKS
+
+on:
+  push:
+    branches:
+      - 'integration*'
+      - 'release'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/ingestion-service ingestion-service=${{ secrets.ECR_REGISTRY }}/ingestion-service:${{ github.sha }} -n rtsp
+          kubectl set image deployment/processing-service processing-service=${{ secrets.ECR_REGISTRY }}/processing-service:${{ github.sha }} -n rtsp
+          kubectl set image deployment/alert-service alert-service=${{ secrets.ECR_REGISTRY }}/alert-service:${{ github.sha }} -n rtsp
+          kubectl set image deployment/api-gateway api-gateway=${{ secrets.ECR_REGISTRY }}/api-gateway:${{ github.sha }} -n rtsp
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/ingestion-service -n rtsp --timeout=300s
+          kubectl rollout status deployment/processing-service -n rtsp --timeout=300s
+          kubectl rollout status deployment/alert-service -n rtsp --timeout=300s
+          kubectl rollout status deployment/api-gateway -n rtsp --timeout=300s

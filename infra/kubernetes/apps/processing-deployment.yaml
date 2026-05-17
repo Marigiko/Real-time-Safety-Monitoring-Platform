@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: processing-service
+  namespace: rtsp
+spec:
+  ports:
+    - port: 3001
+      targetPort: 3001
+  selector:
+    app: processing-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processing-service
+  namespace: rtsp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: processing-service
+  template:
+    metadata:
+      labels:
+        app: processing-service
+    spec:
+      containers:
+        - name: processing-service
+          image: rtsp/processing-service:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3001"
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: rtsp-config
+                  key: KAFKA_BROKERS
+            - name: RABBITMQ_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rtsp-config
+                  key: RABBITMQ_URL
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: rtsp-config
+                  key: POSTGRES_HOST
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5

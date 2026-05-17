@@ -1,0 +1,15 @@
+apiVersion: v2
+name: safety-platform
+description: Real-Time Safety Monitoring Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - monitoring
+  - safety
+  - iot
+  - mqtt
+  - kafka
+maintainers:
+  - name: RTSP Team
+    email: team@rtsp.local

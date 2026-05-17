@@ -1,0 +1,63 @@
+{{- define "service.deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  namespace: {{ .namespace }}
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: {{ .image }}
+          ports:
+            - containerPort: {{ .port }}
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: {{ .port | quote }}
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .configMap }}-config
+                  key: KAFKA_BROKERS
+            - name: RABBITMQ_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .configMap }}-config
+                  key: RABBITMQ_URL
+          resources:
+            requests:
+              memory: {{ .requests.memory }}
+              cpu: {{ .requests.cpu }}
+            limits:
+              memory: {{ .limits.memory }}
+              cpu: {{ .limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+{{- end -}}
+
+{{- $root := . -}}
+{{- range $serviceName, $service := .Values.services }}
+{{- $image := printf "%s/%s:%s" $root.Values.image.registry $serviceName $root.Values.image.tag | default "latest" }}
+{{- template "service.deployment" (dict "name" $serviceName "namespace" $root.Values.namespace "image" $image "port" $service.port "replicas" $service.replicaCount "requests" $service.resources.requests "limits" $service.resources.limits "configMap" $root.Chart.Name) }}
+{{- end }}

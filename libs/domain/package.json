@@ -1,0 +1,19 @@
+{
+  "name": "@rtsp/domain",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test",
+    "lint": "echo 'No lint configured'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
